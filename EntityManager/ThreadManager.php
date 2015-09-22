@@ -222,10 +222,36 @@ class ThreadManager extends BaseThreadManager
     {
         // remove all non-word chars
         $search = preg_replace('/[^\w]/', ' ', trim($search));
-        // build a regex like (term1|term2)
-        $regex = sprintf('/(%s)/', implode('|', explode(' ', $search)));
 
-        throw new \Exception('not yet implemented');
+        $searches = explode(' ', $search);
+
+        $qb = $this->repository->createQueryBuilder('t')
+            ->innerJoin('t.metadata', 'tm')
+            ->innerJoin('tm.participant', 'p')
+
+            // the participant is in the thread participants
+            ->andWhere('p.id = :user_id')
+            ->setParameter('user_id', $participant->getId())
+
+            // the thread does not contain spam or flood
+            ->andWhere('t.isSpam = :isSpam')
+            ->setParameter('isSpam', false, \PDO::PARAM_BOOL)
+
+            // the thread is not deleted by this participant
+            ->andWhere('tm.isDeleted = :isDeleted')
+            ->setParameter('isDeleted', false, \PDO::PARAM_BOOL)
+
+            // sort by date of last message written by an other participant
+            ->orderBy('tm.lastMessageDate', 'DESC')
+        ;
+
+        foreach ($searches as $sk => $sv) {
+            $cqb[]=$qb->expr()->like("t.subject", "'%$sv%'");
+        }
+
+        $qb->andWhere(call_user_func_array(array($qb->expr(),"orx"), $cqb));
+
+        return $qb;
     }
 
     /**
