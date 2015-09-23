@@ -2,6 +2,7 @@
 
 namespace FOS\MessageBundle\Controller;
 
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -101,31 +102,43 @@ class MessageController extends ContainerAware
     /**
      * Deletes a thread
      * 
-     * @param string $threadId the thread id
+     * @param Request $request
      * 
      * @return RedirectResponse
      */
-    public function deleteAction($threadId)
+    public function deleteAction(Request $request)
     {
-        $thread = $this->getProvider()->getThread($threadId);
-        $this->container->get('fos_message.deleter')->markAsDeleted($thread);
-        $this->container->get('fos_message.thread_manager')->saveThread($thread);
+        $threads = $request->request->get("threadId");
+
+        $threadsArray = explode(",", $threads);
+
+        foreach ($threadsArray as $threadId) {
+            $thread = $this->getProvider()->getThread($threadId);
+            $this->container->get('fos_message.deleter')->markAsDeleted($thread);
+            $this->container->get('fos_message.thread_manager')->saveThread($thread);
+        }
 
         return new RedirectResponse($this->container->get('router')->generate('fos_message_inbox'));
     }
     
     /**
      * Undeletes a thread
-     * 
-     * @param string $threadId
+     *
+     * @param Request $request
      * 
      * @return RedirectResponse
      */
-    public function undeleteAction($threadId)
+    public function undeleteAction(Request $request)
     {
-        $thread = $this->getProvider()->getThread($threadId);
-        $this->container->get('fos_message.deleter')->markAsUndeleted($thread);
-        $this->container->get('fos_message.thread_manager')->saveThread($thread);
+        $threads = $request->request->get("threadId");
+
+        $threadsArray = explode(",", $threads);
+
+        foreach ($threadsArray as $threadId) {
+            $thread = $this->getProvider()->getThread($threadId);
+            $this->container->get('fos_message.deleter')->markAsUndeleted($thread);
+            $this->container->get('fos_message.thread_manager')->saveThread($thread);
+        }
 
         return new RedirectResponse($this->container->get('router')->generate('fos_message_inbox'));
     }

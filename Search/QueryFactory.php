@@ -40,7 +40,7 @@ class QueryFactory implements QueryFactoryInterface
      */
     public function createFromRequest()
     {
-        $original = $this->request->query->get($this->queryParameter);
+        $original = $this->request->get($this->queryParameter);
         $original = trim($original);
 
         $escaped = $this->escapeTerm($original);
