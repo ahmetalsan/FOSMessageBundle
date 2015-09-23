@@ -13,11 +13,22 @@ class MessageController extends ContainerAware
     /**
      * Displays the authenticated participant inbox
      *
+     * @param Request $request
+     *
      * @return Response
      */
-    public function inboxAction()
+    public function inboxAction(Request $request)
     {
-        $threads = $this->getProvider()->getInboxThreads();
+        //$threads = $this->getProvider()->getInboxThreads();
+
+        $paginator  = $this->container->get('knp_paginator');
+        $threads = $paginator->paginate(
+            $this->container->get('fos_message.thread_manager')->getParticipantInboxThreadsQueryBuilder(
+                $this->container->get('fos_message.participant_provider')->getAuthenticatedParticipant()
+            )->getQuery(),
+            $request->query->getInt('page', 1)/*page number*/,
+            15/*limit per page*/
+        );
 
         return $this->container->get('templating')->renderResponse('FOSMessageBundle:Message:inbox.html.twig', array(
             'threads' => $threads
@@ -27,11 +38,22 @@ class MessageController extends ContainerAware
     /**
      * Displays the authenticated participant messages sent
      *
+     * @param Request $request
+     *
      * @return Response
      */
-    public function sentAction()
+    public function sentAction(Request $request)
     {
-        $threads = $this->getProvider()->getSentThreads();
+        //$threads = $this->getProvider()->getSentThreads();
+
+        $paginator  = $this->container->get('knp_paginator');
+        $threads = $paginator->paginate(
+            $this->container->get('fos_message.thread_manager')->getParticipantSentThreadsQueryBuilder(
+                $this->container->get('fos_message.participant_provider')->getAuthenticatedParticipant()
+            )->getQuery(),
+            $request->query->getInt('page', 1)/*page number*/,
+            15/*limit per page*/
+        );
 
         return $this->container->get('templating')->renderResponse('FOSMessageBundle:Message:sent.html.twig', array(
             'threads' => $threads
@@ -41,11 +63,22 @@ class MessageController extends ContainerAware
     /**
      * Displays the authenticated participant deleted threads
      *
+     * @param Request $request
+     *
      * @return Response
      */
-    public function deletedAction()
+    public function deletedAction(Request $request)
     {
-        $threads = $this->getProvider()->getDeletedThreads();
+        //$threads = $this->getProvider()->getDeletedThreads();
+
+        $paginator  = $this->container->get('knp_paginator');
+        $threads = $paginator->paginate(
+            $this->container->get('fos_message.thread_manager')->getParticipantDeletedThreadsQueryBuilder(
+                $this->container->get('fos_message.participant_provider')->getAuthenticatedParticipant()
+            )->getQuery(),
+            $request->query->getInt('page', 1)/*page number*/,
+            15/*limit per page*/
+        );
 
         return $this->container->get('templating')->renderResponse('FOSMessageBundle:Message:deleted.html.twig', array(
             'threads' => $threads
@@ -146,15 +179,22 @@ class MessageController extends ContainerAware
     /**
      * Searches for messages in the inbox and sentbox
      *
+     * @param Request $request
+     *
      * @return Response
      */
-    public function searchAction()
+    public function searchAction(Request $request)
     {
         $query = $this->container->get('fos_message.search_query_factory')->createFromRequest();
-        $threads = $this->container->get('fos_message.search_finder')->find($query);
+
+        $paginator  = $this->container->get('knp_paginator');
+        $threads = $paginator->paginate(
+            $this->container->get('fos_message.search_finder')->find($query),
+            $request->query->getInt('page', 1)/*page number*/,
+            15/*limit per page*/
+        );
 
         return $this->container->get('templating')->renderResponse('FOSMessageBundle:Message:search.html.twig', array(
-            'query' => $query,
             'threads' => $threads
         ));
     }
