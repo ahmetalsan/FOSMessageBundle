@@ -179,15 +179,22 @@ class MessageController extends ContainerAware
     /**
      * Searches for messages in the inbox and sentbox
      *
+     * @param Request $request
+     *
      * @return Response
      */
-    public function searchAction()
+    public function searchAction(Request $request)
     {
         $query = $this->container->get('fos_message.search_query_factory')->createFromRequest();
-        $threads = $this->container->get('fos_message.search_finder')->find($query);
+
+        $paginator  = $this->container->get('knp_paginator');
+        $threads = $paginator->paginate(
+            $this->container->get('fos_message.search_finder')->find($query),
+            $request->query->getInt('page', 1)/*page number*/,
+            15/*limit per page*/
+        );
 
         return $this->container->get('templating')->renderResponse('FOSMessageBundle:Message:search.html.twig', array(
-            'query' => $query,
             'threads' => $threads
         ));
     }
